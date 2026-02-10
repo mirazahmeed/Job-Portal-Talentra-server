@@ -54,14 +54,15 @@ async function run() {
 			const result = await applicationsCollection.find(query).toArray();
 
 			// bad way
-			for (const application of result){
+			for (const application of result) {
 				const jobId = application.jobId;
 				const jobQuery = { _id: new ObjectId(jobId) };
 				const job = await jobsCollection.findOne(jobQuery);
 				application.company = job.company;
 				application.title = job.title;
 				application.company_logo = job.company_logo;
-				
+				application.location = job.location;
+				application.jobType = job.jobType;
 			}
 
 			res.send(result);
@@ -71,6 +72,13 @@ async function run() {
 			const application = req.body;
 			console.log(application);
 			const result = await applicationsCollection.insertOne(application);
+			res.send(result);
+		});
+
+		app.delete("/applications/:id", async (req, res) => {
+			const id = req.params.id;
+			const query = { _id: new ObjectId(id) };
+			const result = await applicationsCollection.deleteOne(query);
 			res.send(result);
 		});
 
