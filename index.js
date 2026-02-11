@@ -34,7 +34,11 @@ async function run() {
 		//jobs api
 
 		app.get("/jobs", async (req, res) => {
+			const email = req.query.email;
 			const query = {};
+			if (email) {
+				query.hr_email = email;
+			}
 			const cursor = jobsCollection.find(query);
 			const jobs = await cursor.toArray();
 			res.send(jobs);
@@ -45,6 +49,13 @@ async function run() {
 			const query = { _id: new ObjectId(id) };
 			const job = await jobsCollection.findOne(query);
 			res.send(job);
+		});
+
+		app.post("/jobs", async (req, res) => {
+			const newJob = req.body;
+			console.log(newJob);
+			const result = await jobsCollection.insertOne(newJob);
+			res.send(result);
 		});
 
 		// jpb applications related apis
@@ -65,6 +76,15 @@ async function run() {
 				application.jobType = job.jobType;
 			}
 
+			res.send(result);
+		});
+
+		app.get("/applications/job/:job_id", async (req, res) => {
+			const job_id = req.params.job_id;
+			console.log(job_id);
+			const query = { jobId: job_id };
+			const cursor = applicationsCollection.find(query);
+			const result = await cursor.toArray();
 			res.send(result);
 		});
 
