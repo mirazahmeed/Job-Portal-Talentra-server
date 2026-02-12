@@ -44,6 +44,23 @@ async function run() {
 			res.send(jobs);
 		});
 
+		app.get("/jobs/applications", async (req, res) => {
+			const email = req.query.email;
+			const query = { hr_email: email };
+			const cursor = jobsCollection.find(query);
+			const jobs = await cursor.toArray();
+
+			for (const job of jobs) {
+				const jobId = job._id;
+				const jobQuery = { jobId: jobId.toString() };
+				const applications_count =
+					await applicationsCollection.countDocuments(jobQuery);
+				job.totalApplications = applications_count;
+			}
+
+			res.send(jobs);
+		});
+
 		app.get("/jobs/:id", async (req, res) => {
 			const id = req.params.id;
 			const query = { _id: new ObjectId(id) };
@@ -92,6 +109,21 @@ async function run() {
 			const application = req.body;
 			console.log(application);
 			const result = await applicationsCollection.insertOne(application);
+			res.send(result);
+		});
+
+		app.patch("/applications/:id", async (req, res) => {
+			const id = req.params.id;
+			const filter = { _id: new ObjectId(id) };
+			const updateDoc = {
+				$set: {
+					status: req.body.status,
+				},
+			};
+			const result = await applicationsCollection.updateOne(
+				filter,
+				updateDoc,
+			);
 			res.send(result);
 		});
 
