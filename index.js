@@ -1,12 +1,18 @@
 const express = require("express");
 const cors = require("cors");
 const app = express();
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
 // middleware
-app.use(cors());
+app.use(
+	cors({
+		origin: "http://localhost:5173",
+		credentials: true,
+	}),
+);
 app.use(express.json());
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.7cdmalj.mongodb.net/?appName=Cluster0`;
@@ -30,6 +36,16 @@ async function run() {
 		const applicationsCollection = client
 			.db("talentra")
 			.collection("applications");
+		// authentication api with jwt
+
+		app.post("/jwt", async (req, res) => {
+			const { email } = req.body;
+			const user = { email };
+			const token = jwt.sign(user, process.env.JWT_ACCESS_SECRAT, {
+				expiresIn: "1h",
+			});
+			res.send({ token });
+		});
 
 		//jobs api
 
