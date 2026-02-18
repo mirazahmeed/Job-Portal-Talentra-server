@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const app = express();
 const jwt = require("jsonwebtoken");
+const cookieParser = require("cookie-parser");
 const port = process.env.PORT || 3000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
@@ -14,6 +15,13 @@ app.use(
 	}),
 );
 app.use(express.json());
+app.use(cookieParser());
+
+const logger = (req, res, next) => {
+	console.log(req.cookies);
+	next();
+};
+
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.7cdmalj.mongodb.net/?appName=Cluster0`;
 
@@ -36,15 +44,21 @@ async function run() {
 		const applicationsCollection = client
 			.db("talentra")
 			.collection("applications");
+
 		// authentication api with jwt
 
 		app.post("/jwt", async (req, res) => {
-			const { email } = req.body;
-			const user = { email };
-			const token = jwt.sign(user, process.env.JWT_ACCESS_SECRAT, {
+			const userData = req.body;
+			const token = jwt.sign(userData, process.env.JWT_ACCESS_SECRAT, {
 				expiresIn: "1h",
 			});
-			res.send({ token });
+			// set cookie
+			res.cookie("jwt", token, {
+				httpOnly: true,
+				secure: false,
+			});
+
+			res.send({ success: true, token });
 		});
 
 		//jobs api
@@ -94,6 +108,8 @@ async function run() {
 		// jpb applications related apis
 		app.get("/applications", async (req, res) => {
 			const email = req.query.email;
+			console.log('inside appli api', req.cookies);
+			
 			const query = { applicantEmail: email };
 			const result = await applicationsCollection.find(query).toArray();
 
