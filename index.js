@@ -10,7 +10,7 @@ require("dotenv").config();
 // middleware
 app.use(
 	cors({
-		origin: "http://localhost:5173",
+		origin: ["http://localhost:5173", "http://localhost:5174"],
 		credentials: true,
 	}),
 );
@@ -18,10 +18,15 @@ app.use(express.json());
 app.use(cookieParser());
 
 const logger = (req, res, next) => {
-	console.log(req.cookies);
+	console.log("inside the logger middleware");
 	next();
 };
 
+const verifyToken = (req, res, next) => {
+	console.log("cookie inside the verify token middleware", req.cookies);
+
+	next();
+};
 
 const uri = `mongodb+srv://${process.env.DB_USERNAME}:${process.env.DB_PASSWORD}@cluster0.7cdmalj.mongodb.net/?appName=Cluster0`;
 
@@ -106,10 +111,10 @@ async function run() {
 		});
 
 		// jpb applications related apis
-		app.get("/applications", async (req, res) => {
+		app.get("/applications", logger, verifyToken, async (req, res) => {
 			const email = req.query.email;
-			console.log('inside appli api', req.cookies);
-			
+			console.log("inside appli api", req.cookies);
+
 			const query = { applicantEmail: email };
 			const result = await applicationsCollection.find(query).toArray();
 
